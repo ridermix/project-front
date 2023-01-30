@@ -42,10 +42,21 @@
 
         <div id ="paging_buttons">Pages:&nbsp;</div>
 
+        <hr>
+        <h2>Create new account:</h2>
+        <label for="input_new_name" style="font-size: 18px; margin-right: 61px"> Name:</label>
+        <input type="text" id="input_new_name" name="name" required size="12" maxlength="12">
+        <br>
+        <br>
+
+
+
 
         <script>
             function fillTable(page_number) {
+
                 $("tr:has(td)").remove();
+
                 let url = "/rest/players?";
                 let countPerPage = $("#countPerPage").val();
                 if (countPerPage == null) {
@@ -56,37 +67,43 @@
                 if (page_number == null) {
                     page_number = 0;
                 }
-                url = url.concat("&pageNumber").concat(page_number);
+                url = url.concat("&pageNumber=").concat(page_number);
 
-            $.get(url, function (data) {
-                $.each(data, function (key, value) {
-                    $('<tr>')
-                        .html('<td>' + value.id + '</td>'
-                            + '<td>' + value.name + '</td>'
-                            + '<td>' + value.title + '</td>'
-                            + '<td>' + value.race + '</td>'
-                            + '<td>' + value.profession + '</td>'
-                            + '<td>' + value.level + '</td>'
-                            + '<td>' + new Date(value.birthday).toLocaleDateString() + '</td>'
-                            + '<td>' + value.banned + '</td>')
-                    .appendTo("#table");
-                 });
-            });
+                $.get(url, function (data) {
+                    $.each(data, function (key, value) {
+                        $('<tr>')
+                            .html('<td>' + value.id + '</td>'
+                                + '<td>' + value.name + '</td>'
+                                + '<td>' + value.title + '</td>'
+                                + '<td>' + value.race + '</td>'
+                                + '<td>' + value.profession + '</td>'
+                                + '<td>' + value.level + '</td>'
+                                + '<td>' + new Date(value.birthday).toLocaleDateString() + '</td>'
+                                + '<td>' + value.banned + '</td>'
+                                + '<td>' + "<button id='button_edit_" + value.id + "' onclick='editAccount(" + value.id + ")'>"
+                                + "<img src='/img/edit.png' style=\"width: 20px; height: 20px\">"
+                                + "</button>" + '</td>'
+                                + '<td>' + "<button id='button_delete_" + value.id + "' onclick='deleteAccount(" + value.id + ")'>"
+                                + "<img src='/img/delete.png' style=\"width: 20px; height: 20px\">"
+                                + "</button>" + '</td>'
+                            ).appendTo("#table");
+                    });
+                });
 
-            let totalCount = getNumberOfAccount();
-            let pagesCount = Math.ceil(totalCount / countPerPage);
+                let totalCount = getNumberOfAccount();
+                let pagesCount = Math.ceil(totalCount / countPerPage);
 
-            $("button.pgn-bnt-styled").remove();
-            for (let i = 0; i < pagesCount; i++) {
-                let button_tag = "<button>" + (i + 1) + "</button>";
-                let button = $(button_tag)
-                    .attr("id", "paging_button_" + i)
-                    .attr("onclick", "fillTable(" + i + ")")
-                    .addClass("pgn-bnt-styled");
-                $("#paging_buttons").append(button);
-            }
-            let identifier = "#paging_button_" + page_number;
-            $(identifier).css("background", "#1e88e5").css("color", "#fff");
+                $("button.pgn-bnt-styled").remove();
+                for (let i = 0; i < pagesCount; i++) {
+                    let button_tag = "<button>" + (i + 1) + "</button>";
+                    let button = $(button_tag)
+                        .attr("id", "paging_button_" + i)
+                        .attr("onclick", "fillTable(" + i + ")")
+                        .addClass("pgn-bnt-styled");
+                    $("#paging_buttons").append(button);
+                }
+                let identifier = "#paging_button_" + page_number;
+                $(identifier).css("background", "#1e88e5").css("color", "#fff");
 
             }
 
@@ -102,6 +119,45 @@
                 })
 
                 return res;
+            }
+
+            function editAccount(id) {
+                let identifier_edit = "#button_edit_" + id;
+                let identifier_delete = "#button_delete_" + id;
+
+                $(identifier_delete).remove();
+
+                let save_image_tag = "<img src='/img/save.png' style=\"width: 20px; height: 20px\">"
+                $(identifier_edit).html(save_image_tag);
+
+                // let current_tr_element = $(identifier_edit).parent().parent();
+                // let child = current_tr_element.children();
+                //
+                // let td_name = child[1];
+
+
+
+            }
+
+            function deleteAccount(id) {
+                let url = '/rest/players/' +id;
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    success: function () {
+                        fillTable(getCurrentPage());
+                    }
+                });
+            }
+
+            function getCurrentPage() {
+                let current_page = 1;
+                $('button:parent(div)').each(function () {
+                    if($(this).css('color') === '#FF0000'){
+                        current_page = $(this).text()
+                    }
+                });
+                return parseInt(current_page) - 1;
             }
 
 
