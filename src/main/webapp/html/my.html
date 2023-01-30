@@ -1,28 +1,109 @@
 <html>
-<head>
-    <title>RPG</title>
-    <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
-    <link href="/css/my.css" rel="stylesheet">
-</head>
-<body>
-<h1>RPG admin panel</h1>
-<table id='table1'>
-    <caption>Account list:</caption>
-    <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Title</th>
-        <th>Race</th>
-        <th>Profession</th>
-        <th>Level</th>
-        <th>Birthday</th>
-        <th>Banned</th>
-    </tr>
-</table>
+    <head>
+        <title>RPG</title>
+        <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
+        <link rel="stylesheet" href="/css/my.css">
+
+    </head>
+
+    <body onload="fillTable(0)">
+        <h1>RPG admin panel</h1>
+        <h2>Account list:</h2>
+
+        <label for="countPerPage">Count per page:</label>
+        <select id="countPerPage" onchange="fillTable(0)">
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+        </select>
+        <br>
+
+        <div class="container mtb-3">
+            <table id='table'>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Title</th>
+                        <th>Race</th>
+                        <th>Profession</th>
+                        <th>Level</th>
+                        <th>Birthday</th>
+                        <th>Banned</th>
+                        <th>Edit</th>
+                        <th>Deleted</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <br>
+
+        <div id ="paging_buttons">Pages:&nbsp;</div>
 
 
-<script>
-    let url = "/rest/players"
+        <script>
+            function fillTable(page_number) {
+                $("tr:has(td)").remove();
+                let url = "/rest/players?";
+                let countPerPage = $("#countPerPage").val();
+                if (countPerPage == null) {
+                    countPerPage = 3;
+                }
+                url = url.concat("pageSize=").concat(countPerPage);
+
+                if (page_number == null) {
+                    page_number = 0;
+                }
+                url = url.concat("&pageNumber").concat(page_number);
+
+            $.get(url, function (data) {
+                $.each(data, function (key, value) {
+                    $('<tr>')
+                        .html('<td>' + value.id + '</td>'
+                            + '<td>' + value.name + '</td>'
+                            + '<td>' + value.title + '</td>'
+                            + '<td>' + value.race + '</td>'
+                            + '<td>' + value.profession + '</td>'
+                            + '<td>' + value.level + '</td>'
+                            + '<td>' + new Date(value.birthday).toLocaleDateString() + '</td>'
+                            + '<td>' + value.banned + '</td>')
+                    .appendTo("#table");
+                 });
+            });
+
+            let totalCount = getNumberOfAccount();
+            let pagesCount = Math.ceil(totalCount / countPerPage);
+
+            $("button.pgn-bnt-styled").remove();
+            for (let i = 0; i < pagesCount; i++) {
+                let button_tag = "<button>" + (i + 1) + "</button>";
+                let button = $(button_tag)
+                    .attr("id", "paging_button_" + i)
+                    .attr("onclick", "fillTable(" + i + ")")
+                    .addClass("pgn-bnt-styled");
+                $("#paging_buttons").append(button);
+            }
+            let identifier = "#paging_button_" + page_number;
+            $(identifier).css("background", "#1e88e5").css("color", "#fff");
+
+            }
+
+            function getNumberOfAccount() {
+                let url = "/rest/players/count";
+                let res = 0;
+                $.ajax({
+                    url: url,
+                    async: false,
+                    success:function (result){
+                        res = parseInt(result);
+                    }
+                })
+
+                return res;
+            }
+
 
     // function sendRequest(method, url) {
     //     return new Promise((resolve, reject) => {
@@ -47,21 +128,6 @@
     // sendRequest('GET', url)
     //     .then(data => console.log(data))
     //     .catch(err => console.log(err))
-
-    $.get(url, function (data) {
-        $.each(data, function (key, value) {
-            $('<tr>')
-                .html('<td>' + value.id + '</td>'
-                    + '<td>' + value.name + '</td>'
-                    + '<td>' + value.title + '</td>'
-                    + '<td>' + value.race + '</td>'
-                    + '<td>' + value.profession + '</td>'
-                    + '<td>' + value.level + '</td>'
-                    + '<td>' + new Date(value.birthday).toLocaleDateString() + '</td>'
-                    + '<td>' + value.banned + '</td>')
-                .appendTo("#table1");
-        });
-    });
 
 
 </script>
